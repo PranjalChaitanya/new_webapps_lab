@@ -1,0 +1,6 @@
+<p>Categories</p>
+<ul>
+    <% for (let i = 0; i < inventory.length; i++) { %>
+        <li><%= inventory[i].category_name %> <a href="/categories/<%= inventory[i].category_id %>/delete">Delete</a></li>
+    <% } %>
+</ul>

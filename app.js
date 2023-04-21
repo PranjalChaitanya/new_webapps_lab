@@ -55,6 +55,12 @@ app.use(express.static(__dirname + '/public'));
 app.use((req, res, next) => {
     res.locals.isLoggedIn = req.oidc.isAuthenticated();
     res.locals.user = req.oidc.user;
+    try {
+        res.locals.email = req.oidc.user.email;
+    }
+    catch(err) {
+
+    }
     next();
 })
 
@@ -74,22 +80,44 @@ app.get( "/", ( req, res ) => {
 
 // define a route for the stuff inventory page
 const read_stuff_all_sql = `
-    SELECT 
-        id, item, quantity
-    FROM
-        stuff
-    WHERE 
-        userid = ?
+SELECT id, item, quantity,
+(SELECT category_name FROM categories WHERE user_email = stuff.userid LIMIT 1) as category 
+FROM stuff
+WHERE userid = ?;
 `
+
 app.get( "/stuff", requiresAuth(), ( req, res ) => {
     db.execute(read_stuff_all_sql, [req.oidc.user.email], (error, results) => {
         if (error)
             res.status(500).send(error); //Internal Server Error
         else {
+            console.log(results);
             res.render('stuff', { inventory : results });
         }
     });
 } );
+
+const get_user_categories = `
+    SELECT
+        category_name, category_id
+    FROM 
+        categories
+    WHERE 
+        user_email = ?
+`
+app.get("/categories", requiresAuth(), ( req, res ) => {
+    db.execute(get_user_categories, [req.oidc.user.email], (error, results) => {
+        if (error) {
+            res.status(500).send(error); //Internal Server Error
+        }
+        else {
+            let data = results
+            res.render('categories', { inventory : data })
+        }
+    })
+})
+
+
 
 // define a route for the item detail page
 const read_stuff_item_sql = `
@@ -137,6 +165,28 @@ app.get("/stuff/item/:id/delete", requiresAuth(), ( req, res ) => {
     });
 })
 
+const delete_category_sql = `
+    DELETE
+    FROM
+        categories
+    WHERE
+        category_id = ?
+    AND
+        user_id = ?
+`
+
+app.get("/categories/:id/delete", requiresAuth(), ( req, res ) => { 
+    console.log(req.params.id)
+    db.execute(delete_category_sql, [req.params.id, req.oidc.user.email], (error, results) => {
+        if (error) {
+            res.status(500).send(error); //Internal Server Error
+        }
+        else {
+            res.redirect("/categories")
+        }
+    })
+})
+
 // define a route for item UPDATE
 const update_item_sql = `
     UPDATE
@@ -176,6 +226,37 @@ app.post("/stuff", requiresAuth(), ( req, res ) => {
             res.redirect(`/stuff/item/${results.insertId}`);
         }
     });
+})
+
+// const get_categories_sql = `
+// SELECT category_name
+// FROM categories
+// WHERE user_email = ?;
+// `
+
+// app.get('/categories/:id', requiresAuth(), (req, res) => {
+//     db.execute(get_categories_sql, [req.oidc.user.email], (err, results) => {
+//         if (err) {
+//             res.status(500).send(err);
+//         }
+//     })
+// })
+
+const create_category_sql = `
+    INSERT INTO categories 
+        (user_email, category_name) 
+    VALUES 
+        (?, ?)
+`
+
+app.post('/categories/:email', requiresAuth(), ( req, res ) => {
+    // console.log(req.params.email)
+    db.execute(create_category_sql, [ req.params.email, req.body.category_name ], (err, results) => {
+        if (err) {
+            res.status(500).send(err); //Internal Server Error
+        }
+        res.redirect(`/categories`)
+    })
 })
 
 // start the server

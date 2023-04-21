@@ -25,6 +25,7 @@
                 <ul id="desktop-nav" class="right hide-on-med-and-down">
                     <li><a href="/"><i class="material-icons left">home</i>Home</a></li>
                     <li><a href="/stuff"><i class="material-icons left">list</i>Inventory</a></li>
+                    <li><a href="/categories"><i class="material-icons left">list</i>Categories</a></li>
                     <% if (isLoggedIn) { %>
                         <li><a href="/profile"><i class="material-icons left">person</i> Hello, <%=user.name%></a> </li>
                         <li><a href="/logout" class="btn red">Logout</a></li>                        
@@ -55,6 +56,7 @@
                     <tr>
                         <th>Item</th>
                         <th>Quantity</th>
+                        <th>Category</th>
                         <th></th>
                     </tr>
 
@@ -64,6 +66,7 @@
                         <tr>
                             <td><%= inventory[i].item %></td>
                             <td><%= inventory[i].quantity %></td>
+                            <td><%= inventory[i].category %></td>
                             <td>
                                 <a class="btn-small waves-effect waves-light" href="/stuff/item/<%= inventory[i].id %>" >
                                     <i class="material-icons right">edit</i>
@@ -98,6 +101,21 @@
             </form>
         </div>
     </div>
+
+    <div class="section" id="stuffAdd">
+        <h2>Add Categories:</h2>
+        <form method="post" action="/categories/<%= email %>"> <!-- default action is the page's URL --> 
+            <div class="row">
+                <div class="input-field col s6">
+                    <label for="nameInput">Category Name:</label>
+                    <input type="text" name="category_name" id="nameInput" class="validate" data-length="32" required>
+                </div>
+            </div>
+            <button class="btn waves-effect waves-light" type="submit"><i
+                    class="material-icons right">send</i>Submit</button>
+        </form>
+    </div>
+</div>
 
     <!-- Materialize JavaScript -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
